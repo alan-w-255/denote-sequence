@@ -1166,9 +1166,7 @@ For a more specialised case, see `denote-sequence-find-relatives-dired'."
                                                   (denote-sequence-get-all-files-with-max-depth depth files)
                                                 files))
                             (files-sorted (denote-sequence-sort-files files-with-depth)))
-                       (if single-dir-p
-                           (mapcar #'file-relative-name files-sorted)
-                         files-sorted)))))
+                       (mapcar #'file-relative-name files-sorted)))))
     (if-let* ((directory (if single-dir-p
                              (car roots)
                            (denote-directories-get-common-root roots)))
@@ -1243,8 +1241,11 @@ the target sequence."
   (let* ((target-sequence (or (denote-sequence-file-p file-with-sequence)
                               (denote-sequence-p file-with-sequence)
                               (user-error "No sequence of `denote-sequence-p' found in `%s'" file-with-sequence)))
-         (new-sequence (denote-sequence--get-new-child target-sequence)))
-    (denote-rename-file current-file 'keep-current 'keep-current new-sequence 'keep-current 'keep-current)))
+         (new-sequence (denote-sequence--get-new-child target-sequence))
+         (children (denote-sequence-get-relative (denote-retrieve-filename-signature current-file) 'all-children))
+         (new-file (denote-rename-file current-file 'keep-current 'keep-current new-sequence 'keep-current 'keep-current)))
+    (cl-loop for child in children
+             do (denote-sequence-reparent child new-sequence))))
 
 ;;;###autoload
 (defun denote-sequence-rename-as-parent (current-file)
