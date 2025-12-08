@@ -495,7 +495,7 @@ With optional FILES, operate on them, else use the return value of
                        (components (denote-sequence-split sequence))
                        ((>= depth (length components))))
              file))
-       (or files (denote-sequence-get-all-files)))))
+         (or files (denote-sequence-get-all-files)))))
 
 (defun denote-sequence-get-all-sequences (&optional files)
   "Return all sequences in `denote-directory-files'.
@@ -1133,16 +1133,16 @@ Use optional PREFIX and DEPTH to format the string accordingly."
 (defun denote-sequence--get-interactive-for-prefix-and-depth ()
   "Return interactive list of arguments for `denote-sequence-dired' and related."
   (let ((arg (prefix-numeric-value current-prefix-arg)))
-     (cond
-      ((= arg 16)
-       (list
-        (denote-sequence-prompt "Limit to files that extend SEQUENCE (empty for all)")
-        (denote-sequence-depth-prompt)))
-      ((= arg 4)
-       (list
-        (denote-sequence-prompt "Limit to files that extend SEQUENCE (empty for all)")))
-      (t
-       nil))))
+    (cond
+     ((= arg 16)
+      (list
+       (denote-sequence-prompt "Limit to files that extend SEQUENCE (empty for all)")
+       (denote-sequence-depth-prompt)))
+     ((= arg 4)
+      (list
+       (denote-sequence-prompt "Limit to files that extend SEQUENCE (empty for all)")))
+     (t
+      nil))))
 
 ;;;###autoload
 (defun denote-sequence-dired (&optional prefix depth)
@@ -1242,7 +1242,7 @@ the target sequence."
                               (denote-sequence-p file-with-sequence)
                               (user-error "No sequence of `denote-sequence-p' found in `%s'" file-with-sequence)))
          (new-sequence (denote-sequence--get-new-child target-sequence))
-         (children (denote-sequence-get-relative (denote-retrieve-filename-signature current-file) 'all-children))
+         (children (denote-sequence-get-relative (denote-retrieve-filename-signature current-file) 'children))
          (new-file (denote-rename-file current-file 'keep-current 'keep-current new-sequence 'keep-current 'keep-current)))
     (cl-loop for child in children
              do (denote-sequence-reparent child new-sequence))))
