@@ -1589,6 +1589,59 @@ The commands affected by this user option are the following:
         (insert "\n"))
     (error (message "Failed `denote-sequence--hierarchy-insert' with data: %s" data))))
 
+(defun denote-sequence--swap-sequences-recursive (file1 file2)
+  "Swap sequence numbers of FILE1 and FILE2, including all descendants."
+  (let* ((seq1 (denote-retrieve-filename-signature file1))
+         (seq2 (denote-retrieve-filename-signature file2))
+         (descendants1 (cons file1 (denote-sequence-get-relative seq1 'all-children)))
+         (descendants2 (cons file2 (denote-sequence-get-relative seq2 'all-children)))
+         (renamer (lambda (file new-seq)
+                    (denote-rename-file file 'keep-current 'keep-current
+                                        new-seq 'keep-current 'keep-current)))
+         (denote-rename-confirmations nil)
+         (denote-save-buffers t))
+    ;; Swap sequences and descendants
+    (dolist (file descendants1)
+      (let* ((old-seq (denote-retrieve-filename-signature file))
+             (suffix (string-remove-prefix seq1 old-seq))
+             (new-seq (concat seq2 suffix)))
+        (funcall renamer file new-seq)))
+    (dolist (file descendants2)
+      (let* ((old-seq (denote-retrieve-filename-signature file))
+             (suffix (string-remove-prefix seq2 old-seq))
+             (new-seq (concat seq1 suffix)))
+        (funcall renamer file new-seq)))
+    (denote-update-dired-buffers)))
+
+(defun denote-sequence-hierarchy-move-subtree-down (&optional arg)
+  "Move current subtree down by ARG siblings."
+  (interactive "p")
+  (let* ((arg (or arg 1))
+         (sibling-fn (if (> arg 0)
+                         #'outline-get-next-sibling
+                       #'outline-get-last-sibling)))
+    (outline-back-to-heading)
+    (when-let* ((current-file (get-text-property (point) 'denote-sequence-hierarchy-file))
+                (steps (abs arg)))
+      (dotimes (_ steps)
+        (unless (funcall sibling-fn)
+          (user-error "No more siblings in this direction")))
+      (let* ((target-file (get-text-property (point) 'denote-sequence-hierarchy-file))
+             (target-file-signature (denote-retrieve-filename-signature target-file))
+             (inhibit-read-only t)
+             (denote-rename-confirmations t)
+             (denote-save-buffers))
+        (denote-sequence--swap-sequences-recursive current-file target-file)
+        (denote-update-dired-buffers)
+        (revert-buffer)
+        (save-match-data
+          (search-forward target-file-signature))))))
+
+(defun denote-sequence-hierarchy-move-subtree-up (&optional arg)
+  "Move current subtree up by ARG siblings."
+  (interactive "p")
+  (denote-sequence-hierarchy-move-subtree-down (- arg)))
+
 (defun denote-sequence-hierarchy-get-level ()
   "Return the outline level at point."
   (let ((position (point)))
