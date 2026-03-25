@@ -1386,9 +1386,12 @@ Also see `denote-sequence-dired'."
   "Return path to file for a rename operation.
 The path is that of the special Org buffer (like `org-capture'), the
 file at point in a Dired buffer, or the variable `buffer-file-name'."
-  (if (denote--file-type-org-extra-p)
-      denote-last-path
-    (denote--rename-dired-file-or-current-file-or-prompt)))
+  (cond ((denote--file-type-org-extra-p)
+         denote-last-path)
+        ((and (derived-mode-p 'denote-sequence-hierarchy-mode)
+              (get-text-property (point) 'denote-sequence-hierarchy-file)))
+        (t
+         (denote--rename-dired-file-or-current-file-or-prompt))))
 
 (defun denote-sequence-reparent (current-file file-with-sequence &optional recursive)
   "Re-parent CURRENT-FILE to be a child of FILE-WITH-SEQUENCE.
@@ -1450,7 +1453,7 @@ the recursive behaviour."
     (denote-sequence-file-prompt
      (format "Reparent `%s' (recursively) to be a child of"
              (propertize
-              (denote--rename-dired-file-or-current-file-or-prompt)
+              (denote-sequence--get-current-file-for-renaming)
               'face 'denote-faces-prompt-current-name)))))
   (denote-sequence-reparent current-file file-with-sequence :recursive))
 
@@ -1710,6 +1713,9 @@ Then do what `denote-sequence-hierarchy-move-and-open' entails."
     (define-key map (kbd "n") #'denote-sequence-hierarchy-outline-next-visible-heading)
     (define-key map (kbd "p") #'denote-sequence-hierarchy-outline-previous-visible-heading)
     (define-key map (kbd "q") #'quit-window)
+    (define-key map (kbd "M-<up>") #'denote-sequence-hierarchy-move-subtree-up)
+    (define-key map (kbd "M-<down>") #'denote-sequence-hierarchy-move-subtree-down)
+    (define-key map (kbd "r") #'denote-sequence-reparent-recursive)
     map)
   "Keymap for `denote-sequence-hierarchy-mode'.")
 
